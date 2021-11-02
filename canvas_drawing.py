@@ -26,24 +26,25 @@ class ExampleApp(Frame):
         #self.canvas.bind("<B1-Motion>", self.on_move_press)
         #self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
 
-        def r():
+        def rectangle_button():
+            
             self.rect_button["bg"] = "green"
             self.canvas.bind("<ButtonPress-1>", self.on_button_press)
             self.canvas.bind("<B1-Motion>", self.on_move_press)
             self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
 
-        def l():
+        def line_button():
             self.line_button["bg"] = "lightgreen" 
-            self.canvas.bind("<Control-1>", self.line_drawing)
+            self.canvas.bind("<Control-1>", self.oval_drawing)
 
-        self.rect_button = Button(text = "Rectangle", width = 10, height = 2, command = r)
+        self.rect_button = Button(text = "Rectangle", width = 10, height = 2, command = rectangle_button)
         self.rect_button.grid(row = 0, column = 2)
 
-        self.line_button = Button(text = "Line", width = 10, height = 2, command = l)
+        self.line_button = Button(text = "Line", width = 10, height = 2, command = line_button)
         self.line_button.grid(row = 1, column = 2)
         
         self.rect = None
-        self.line = None
+        self.oval = None
         self.start_x = None
         self.start_y = None
 
@@ -57,7 +58,7 @@ class ExampleApp(Frame):
         self.canvas.config(scrollregion=(0,0,self.rcorX,self.rcorY))
         self.tk_im = ImageTk.PhotoImage(self.im)
         self.canvas.create_image(0,0,anchor="nw",image=self.tk_im)   
-
+        #self.canvas.create_oval(150, 150, 15, 15, fill = "green")
 
     def on_button_press(self, event):
         # save mouse drag start position
@@ -94,11 +95,11 @@ class ExampleApp(Frame):
         print("End x = {}, y = {}".format(self.end_x, self.end_y))
         #pass    
 
-    def line_drawing(self, event):
+    def oval_drawing(self, event):
         curX = self.canvas.canvasx(event.x)
         curY = self.canvas.canvasy(event.y)
-        self.line = self.canvas.create_line(self.x, self.y, self.x+3, self.y+3, fill='black', width = 3)
-        self.canvas.coords(self.line, self.start_x, self.start_y, self.start_x, self.start_y)
+        self.oval = self.canvas.create_oval(curX, curY, curX+3, curY+3, fill='black', width = 3)
+        #self.canvas.coords(self.line, self.start_x, self.start_y, self.start_x, self.start_y)
 
 if __name__ == "__main__":
     root=Tk()
