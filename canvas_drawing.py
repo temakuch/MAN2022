@@ -2,6 +2,7 @@ from PIL import Image as pil_img, ImageTk
 from tkinter import *    
 
 
+
 class ExampleApp(Frame):
     def __init__(self,master):
         Frame.__init__(self,master=None)
@@ -22,17 +23,27 @@ class ExampleApp(Frame):
         self.hbar.grid(row=1,column=0,sticky=E+W)
 
         #self.canvas.bind("<ButtonPress-1>", self.on_button_press)
-        self.canvas.bind("<B1-Motion>", self.on_move_press)
-        self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
+        #self.canvas.bind("<B1-Motion>", self.on_move_press)
+        #self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
 
-        self.rect_button = Button(text = "Rectangle", width = 10, height = 2)
+        def r():
+            self.rect_button["bg"] = "green"
+            self.canvas.bind("<ButtonPress-1>", self.on_button_press)
+            self.canvas.bind("<B1-Motion>", self.on_move_press)
+            self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
+
+        def l():
+            self.line_button["bg"] = "lightgreen" 
+            self.canvas.bind("<Control-1>", self.line_drawing)
+
+        self.rect_button = Button(text = "Rectangle", width = 10, height = 2, command = r)
         self.rect_button.grid(row = 0, column = 2)
-        self.rect_button.bind("<ButtonPress-1>", self.on_button_press, self.on_button_release)
 
-        self.line_button = Button(text = "Line", width = 10, height = 2)
+        self.line_button = Button(text = "Line", width = 10, height = 2, command = l)
         self.line_button.grid(row = 1, column = 2)
+        
         self.rect = None
-
+        self.line = None
         self.start_x = None
         self.start_y = None
 
@@ -58,6 +69,7 @@ class ExampleApp(Frame):
         if not self.rect:
             self.rect = self.canvas.create_rectangle(self.x, self.y, 1, 1, outline='red')
 
+
     def on_move_press(self, event):
         curX = self.canvas.canvasx(event.x)
         curY = self.canvas.canvasy(event.y)
@@ -81,6 +93,12 @@ class ExampleApp(Frame):
         self.end_y = self.canvas.canvasy(event.y)
         print("End x = {}, y = {}".format(self.end_x, self.end_y))
         #pass    
+
+    def line_drawing(self, event):
+        curX = self.canvas.canvasx(event.x)
+        curY = self.canvas.canvasy(event.y)
+        self.line = self.canvas.create_line(self.x, self.y, self.x+3, self.y+3, fill='black', width = 3)
+        self.canvas.coords(self.line, self.start_x, self.start_y, self.start_x, self.start_y)
 
 if __name__ == "__main__":
     root=Tk()
