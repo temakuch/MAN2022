@@ -1,11 +1,15 @@
 from PIL import Image as pil_img, ImageTk
-from tkinter import *    
+from tkinter import *
+    
 
 
 
 class ExampleApp(Frame):
     def __init__(self,master):
         Frame.__init__(self,master=None)
+        master.geometry("{0}x{1}".format(master.winfo_screenwidth(),
+            master.winfo_screenheight()))
+
         self.x = self.y = 0
         self.canvas = Canvas(self,  cursor="cross")
 
@@ -18,9 +22,12 @@ class ExampleApp(Frame):
         self.canvas.config(xscrollcommand=self.hbar.set)
         self.canvas.config(xscrollincrement = 5, yscrollincrement = 5)
 
-        self.canvas.grid(row=0,column=0,sticky=N+S+E+W)
-        self.vbar.grid(row=0,column=1,stick=N+S)
+        self.canvas.grid(row=0,column=0, sticky = N+S+W+E)
+
+        self.vbar.grid(row=0,column=1,sticky=N+S)
         self.hbar.grid(row=1,column=0,sticky=E+W)
+        
+
 
         #self.canvas.bind("<ButtonPress-1>", self.on_button_press)
         #self.canvas.bind("<B1-Motion>", self.on_move_press)
@@ -32,19 +39,30 @@ class ExampleApp(Frame):
             self.canvas.bind("<ButtonPress-1>", self.on_button_press)
             self.canvas.bind("<B1-Motion>", self.on_move_press)
             self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
+            
+            if self.rect and self.rect_button["bg"] == "green":
+                self.rect_button["bg"] = "lightgrey"
+                self.canvas.unbind("<ButtonPress-1>")
+                self.canvas.unbind("<B1-Motion>")
+                self.canvas.unbind("<ButtonRelease-1>")
 
-        def line_button():
-            self.line_button["bg"] = "lightgreen" 
-            self.canvas.bind("<Control-1>", self.oval_drawing)
+
+        def oval_button():
+            self.oval_button["bg"] = "green" 
+            self.canvas.bind("<B1-Motion>", self.oval_drawing)
+            if self.oval and self.oval_button["bg"] == "green":
+                self.oval_button["bg"] = "lightgrey"
+                self.canvas.unbind("<B1-Motion>")
 
         self.rect_button = Button(text = "Rectangle", width = 10, height = 2, command = rectangle_button)
         self.rect_button.grid(row = 0, column = 2)
 
-        self.line_button = Button(text = "Line", width = 10, height = 2, command = line_button)
-        self.line_button.grid(row = 1, column = 2)
-        
+        self.oval_button = Button(text = "Oval", width = 10, height = 2, command = oval_button)
+        self.oval_button.grid(row = 1, column = 2)
+
         self.rect = None
         self.oval = None
+        
         self.start_x = None
         self.start_y = None
 
@@ -53,12 +71,11 @@ class ExampleApp(Frame):
 
         self.im = pil_img.open("images.jpg")
         self.rcorX,self.rcorY=self.im.size
-        #print(self.rcorX)
-        #print(self.rcorY)
+
         self.canvas.config(scrollregion=(0,0,self.rcorX,self.rcorY))
         self.tk_im = ImageTk.PhotoImage(self.im)
-        self.canvas.create_image(0,0,anchor="nw",image=self.tk_im)   
-        #self.canvas.create_oval(150, 150, 15, 15, fill = "green")
+        self.canvas.create_image(0, 0,anchor="nw",image=self.tk_im)   
+
 
     def on_button_press(self, event):
         # save mouse drag start position
@@ -98,11 +115,12 @@ class ExampleApp(Frame):
     def oval_drawing(self, event):
         curX = self.canvas.canvasx(event.x)
         curY = self.canvas.canvasy(event.y)
-        self.oval = self.canvas.create_oval(curX, curY, curX+3, curY+3, fill='black', width = 3)
-        #self.canvas.coords(self.line, self.start_x, self.start_y, self.start_x, self.start_y)
+        self.oval = self.canvas.create_oval(curX, curY, curX+3, curY+3, fill='black', width = 2, dash=(10, 10))
 
-if __name__ == "__main__":
+
+if __name__ == "__main__":       
     root=Tk()
+    root.state('zoomed')
     app = ExampleApp(root)
     app.grid()
     root.mainloop()
