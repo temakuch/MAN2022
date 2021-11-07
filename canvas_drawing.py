@@ -32,6 +32,7 @@ class ExampleApp(Frame):
         self.draw_mode=StringVar()
         self.draw_mode.set("No_mode")
         
+
         self.rect_button = Radiobutton(text = "Rectangle", 
                                        width = 10, 
                                        height = 2, 
@@ -64,6 +65,7 @@ class ExampleApp(Frame):
 
         self.end_x = None
         self.end_y = None
+
  
     
     def draw(self):
@@ -86,12 +88,35 @@ class ExampleApp(Frame):
         self.f_types = [("All types", ".*")]
         self.filename = askopenfilename(filetypes=self.f_types)
         self.im = pil_img.open(self.filename)
+
+
         self.rcorX,self.rcorY=self.im.size
 
         self.canvas.config(scrollregion=(0,0,self.rcorX,self.rcorY))
         self.tk_im = ImageTk.PhotoImage(self.im)
+
         self.canvas.create_image(self.canvas_width/2, self.canvas_height/2,anchor="center",image=self.tk_im)
         self.file_button.grid_forget()
+
+        self.canvas.create_image(0, 0,anchor="nw",image=self.tk_im)   
+    
+    def draw(self):
+        print(self.draw_mode.get())
+        self.unbinding()
+        if self.draw_mode.get() == "Rectangle_mode":
+            self.rect_button["bg"] = "green"
+            self.canvas.bind("<ButtonPress-1>", self.on_button_press)
+            self.canvas.bind("<B1-Motion>", self.on_move_press)
+            self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
+        elif self.draw_mode.get()  == "Dot_mode":
+            self.oval_button["bg"] = "green" 
+            self.canvas.bind("<B1-Motion>", self.oval_drawing)  
+        
+    def unbinding(self):
+        self.canvas.unbind("<ButtonPress-1>")
+        self.canvas.unbind("<B1-Motion>")
+        self.canvas.unbind("<ButtonRelease-1>")
+
 
     def on_button_press(self, event):
         # save mouse drag start position
