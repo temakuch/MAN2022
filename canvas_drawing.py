@@ -99,25 +99,6 @@ class ExampleApp(Frame):
         self.file_button.grid_forget()
 
         self.canvas.create_image(0, 0,anchor="nw",image=self.tk_im)   
-    
-    def draw(self):
-        
-        self.unbinding()
-        if self.draw_mode.get() == "Rectangle_mode":
-            self.rect_button["bg"] = "lightgrey"
-            self.canvas.bind("<ButtonPress-1>", self.on_button_press)
-            self.canvas.bind("<B1-Motion>", self.on_move_press)
-            self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
-        elif self.draw_mode.get()  == "Dot_mode":
-            self.oval_button["bg"] = "lightgrey" 
-            self.canvas.bind("<B1-Motion>", self.oval_drawing)  
-        
-    def unbinding(self):
-        self.canvas.unbind("<ButtonPress-1>")
-        self.canvas.unbind("<B1-Motion>")
-        self.canvas.unbind("<ButtonRelease-1>")
-
-
     def on_button_press(self, event):
         # save mouse drag start position
         self.start_x = self.canvas.canvasx(event.x)
