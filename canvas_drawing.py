@@ -1,6 +1,6 @@
 from PIL import Image as pil_img, ImageTk
 from tkinter import *
-    
+from tkinter.filedialog import askopenfilename    
 
 
 
@@ -11,7 +11,9 @@ class ExampleApp(Frame):
             master.winfo_screenheight()))
 
         self.x = self.y = 0
-        self.canvas = Canvas(self,  cursor="cross")
+        self.canvas_width = master.winfo_screenwidth() - (master.winfo_screenwidth()*0.2)
+        self.canvas_height = master.winfo_screenheight()
+        self.canvas = Canvas(self, width = self.canvas_width, height = self.canvas_height, cursor="cross")
 
         self.vbar=Scrollbar(self,orient=VERTICAL)
         self.hbar=Scrollbar(self,orient=HORIZONTAL)
@@ -26,40 +28,34 @@ class ExampleApp(Frame):
 
         self.vbar.grid(row=0,column=1,sticky=N+S)
         self.hbar.grid(row=1,column=0,sticky=E+W)
+
+        self.draw_mode=StringVar()
+        self.draw_mode.set("No_mode")
         
-
-
-        #self.canvas.bind("<ButtonPress-1>", self.on_button_press)
-        #self.canvas.bind("<B1-Motion>", self.on_move_press)
-        #self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
-
-        def rectangle_button():
-            
-            self.rect_button["bg"] = "green"
-            self.canvas.bind("<ButtonPress-1>", self.on_button_press)
-            self.canvas.bind("<B1-Motion>", self.on_move_press)
-            self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
-            
-            if self.rect and self.rect_button["bg"] == "green":
-                self.rect_button["bg"] = "lightgrey"
-                self.canvas.unbind("<ButtonPress-1>")
-                self.canvas.unbind("<B1-Motion>")
-                self.canvas.unbind("<ButtonRelease-1>")
-
-
-        def oval_button():
-            self.oval_button["bg"] = "green" 
-            self.canvas.bind("<B1-Motion>", self.oval_drawing)
-            if self.oval and self.oval_button["bg"] == "green":
-                self.oval_button["bg"] = "lightgrey"
-                self.canvas.unbind("<B1-Motion>")
-
-        self.rect_button = Button(text = "Rectangle", width = 10, height = 2, command = rectangle_button)
+        self.rect_button = Radiobutton(text = "Rectangle", 
+                                       width = 10, 
+                                       height = 2, 
+                                       command = self.draw,
+                                       variable=self.draw_mode,
+                                       value="Rectangle_mode",
+                                       indicatoron=0)
         self.rect_button.grid(row = 0, column = 2)
 
-        self.oval_button = Button(text = "Oval", width = 10, height = 2, command = oval_button)
+        self.oval_button = Radiobutton(text = "Oval", 
+                                        width = 10, 
+                                        height = 2, 
+                                        command = self.draw,
+                                        variable=self.draw_mode,
+                                        value="Dot_mode",
+                                        indicatoron=0)
         self.oval_button.grid(row = 1, column = 2)
 
+        self.file_button = Button(text = "Upload file", 
+                                    width = 10, 
+                                    height = 2,
+                                    command = self.upload_file)
+
+        self.file_button.grid(row = 2, column = 2)
         self.rect = None
         self.oval = None
         
@@ -68,14 +64,34 @@ class ExampleApp(Frame):
 
         self.end_x = None
         self.end_y = None
+ 
+    
+    def draw(self):
+        self.unbinding()
+        if self.draw_mode.get() == "Rectangle_mode":
+            self.oval_button["bg"] = "lightgrey"
+            self.canvas.bind("<ButtonPress-1>", self.on_button_press)
+            self.canvas.bind("<B1-Motion>", self.on_move_press)
+            self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
+        elif self.draw_mode.get()  == "Dot_mode":
+            self.rect_button["bg"] = "lightgrey" 
+            self.canvas.bind("<B1-Motion>", self.oval_drawing)  
+        
+    def unbinding(self):
+        self.canvas.unbind("<ButtonPress-1>")
+        self.canvas.unbind("<B1-Motion>")
+        self.canvas.unbind("<ButtonRelease-1>")
 
-        self.im = pil_img.open("images.jpg")
+    def upload_file(self):
+        self.f_types = [("All types", ".*")]
+        self.filename = askopenfilename(filetypes=self.f_types)
+        self.im = pil_img.open(self.filename)
         self.rcorX,self.rcorY=self.im.size
 
         self.canvas.config(scrollregion=(0,0,self.rcorX,self.rcorY))
         self.tk_im = ImageTk.PhotoImage(self.im)
-        self.canvas.create_image(0, 0,anchor="nw",image=self.tk_im)   
-
+        self.canvas.create_image(self.canvas_width/2, self.canvas_height/2,anchor="center",image=self.tk_im)
+        self.file_button.grid_forget()
 
     def on_button_press(self, event):
         # save mouse drag start position
@@ -84,8 +100,8 @@ class ExampleApp(Frame):
         print("Start x = {}, y = {}".format(self.start_x, self.start_y))
 
         # create rectangle if not yet exist
-        if not self.rect:
-            self.rect = self.canvas.create_rectangle(self.x, self.y, 1, 1, outline='red')
+        #if not self.rect:
+        self.rect = self.canvas.create_rectangle(self.x, self.y, 1, 1, outline='red')
 
 
     def on_move_press(self, event):
