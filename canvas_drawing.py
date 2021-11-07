@@ -101,15 +101,15 @@ class ExampleApp(Frame):
         self.canvas.create_image(0, 0,anchor="nw",image=self.tk_im)   
     
     def draw(self):
-        print(self.draw_mode.get())
+        
         self.unbinding()
         if self.draw_mode.get() == "Rectangle_mode":
-            self.rect_button["bg"] = "green"
+            self.rect_button["bg"] = "lightgrey"
             self.canvas.bind("<ButtonPress-1>", self.on_button_press)
             self.canvas.bind("<B1-Motion>", self.on_move_press)
             self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
         elif self.draw_mode.get()  == "Dot_mode":
-            self.oval_button["bg"] = "green" 
+            self.oval_button["bg"] = "lightgrey" 
             self.canvas.bind("<B1-Motion>", self.oval_drawing)  
         
     def unbinding(self):
