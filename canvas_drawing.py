@@ -98,7 +98,8 @@ class ExampleApp(Frame):
         self.canvas.create_image(self.canvas_width/2, self.canvas_height/2,anchor="center",image=self.tk_im)
         self.file_button.grid_forget()
 
-        self.canvas.create_image(0, 0,anchor="nw",image=self.tk_im)   
+   
+
     def on_button_press(self, event):
         # save mouse drag start position
         self.start_x = self.canvas.canvasx(event.x)
