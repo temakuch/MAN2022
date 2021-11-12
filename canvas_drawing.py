@@ -1,6 +1,7 @@
-from PIL import Image as pil_img, ImageTk
+from PIL import Image as PIL_img, ImageTk, ImageDraw, ImageOps
 from tkinter import *
-from tkinter.filedialog import askopenfilename    
+from tkinter.filedialog import askopenfilename  
+from cv_processing import CutImage  
 
 
 
@@ -92,13 +93,17 @@ class ExampleApp(Frame):
     def upload_file(self):
         self.f_types = [("All types", ".*")]
         self.filename = askopenfilename(filetypes=self.f_types)
-        self.im = pil_img.open(self.filename)
-
+        self.im = PIL_img.open(self.filename)
+        
+        self.mask_img = ImageOps.grayscale(self.im.copy())
+        
 
         self.rcorX,self.rcorY=self.im.size
 
         self.canvas.config(scrollregion=(0,0,self.rcorX,self.rcorY))
         self.tk_im = ImageTk.PhotoImage(self.im)
+        # OBJ for drawing mask in paralel to canvas
+        self.mask_draw  = ImageDraw.Draw(self.mask_img)
 
         self.canvas.create_image(self.canvas_width/2, self.canvas_height/2,anchor="center",image=self.tk_im)
 
@@ -140,7 +145,11 @@ class ExampleApp(Frame):
         print("End x = {}, y = {}".format(self.end_x, self.end_y))
         self.curX = self.start_x
         self.curY = self.start_y
-
+        # RECTANGLE DRAW IN PIL OBJ
+        self.mask_draw.rectangle([(self.start_x, self.start_y),
+                                  (self.end_x, self.end_y)],
+                                  outline = "black",
+                                  fill="black")
         """if self.rect:
             while self.curY < self.end_y and self.curX < self.end_x:
 
@@ -157,7 +166,11 @@ class ExampleApp(Frame):
         self.curX = self.canvas.canvasx(event.x)
         self.curY = self.canvas.canvasy(event.y)
         self.oval = self.canvas.create_oval(self.curX, self.curY, self.curX+3, self.curY+3, fill='black', width = 2, dash=(10, 10))
-        
+        self.mask_draw.ellipse([(self.curX, self.curY), 
+                                (self.curX+3, self.curY+3)],
+                                outline = "black",
+                                fill='black',
+                                )
 
 
         """if self.oval:
