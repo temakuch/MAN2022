@@ -57,6 +57,8 @@ class ExampleApp(Frame):
                                     command = self.upload_file)
 
         self.file_button.grid(row = 2, column = 2)
+        
+
         self.rect = None
         self.oval = None
         
@@ -65,8 +67,11 @@ class ExampleApp(Frame):
 
         self.end_x = None
         self.end_y = None
-
- 
+        
+        self.rectangle_dict = {}
+        self.oval_dict = {}
+        
+    
     
     def draw(self):
         self.unbinding()
@@ -96,7 +101,7 @@ class ExampleApp(Frame):
         self.tk_im = ImageTk.PhotoImage(self.im)
 
         self.canvas.create_image(self.canvas_width/2, self.canvas_height/2,anchor="center",image=self.tk_im)
-        self.file_button.grid_forget()
+
 
    
 
@@ -133,13 +138,33 @@ class ExampleApp(Frame):
         self.end_x = self.canvas.canvasx(event.x)
         self.end_y = self.canvas.canvasy(event.y)
         print("End x = {}, y = {}".format(self.end_x, self.end_y))
-        #pass    
+        self.curX = self.start_x
+        self.curY = self.start_y
+
+        """if self.rect:
+            while self.curY < self.end_y and self.curX < self.end_x:
+
+                self.rectangle_dict.setdefault(self.curX, []).append((self.curY))
+                self.curY = self.curY+1
+                self.curX = self.curX +1
+                
+            print(self.rectangle_dict.keys())
+            print(self.rectangle_dict.values())"""
+
+     
 
     def oval_drawing(self, event):
-        curX = self.canvas.canvasx(event.x)
-        curY = self.canvas.canvasy(event.y)
-        self.oval = self.canvas.create_oval(curX, curY, curX+3, curY+3, fill='black', width = 2, dash=(10, 10))
+        self.curX = self.canvas.canvasx(event.x)
+        self.curY = self.canvas.canvasy(event.y)
+        self.oval = self.canvas.create_oval(self.curX, self.curY, self.curX+3, self.curY+3, fill='black', width = 2, dash=(10, 10))
+        
 
+
+        """if self.oval:
+            self.oval_dict.setdefault(self.curX, []).append((self.curY, self.curY+1))
+
+        print(self.oval_dict.keys())
+        print(self.oval_dict.values())"""    
 
 if __name__ == "__main__":       
     root=Tk()
