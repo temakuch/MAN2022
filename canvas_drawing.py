@@ -215,8 +215,8 @@ class ExampleApp(Frame):
         if self.fg_bg_mode.get() == "FG_mode":
             self.mask_draw.rectangle([(self.start_x, self.start_y),
                                         (self.end_x, self.end_y)],
-                                        outline = "black",
-                                        fill="black")
+                                        outline = "white",
+                                        fill="white")
 
 
             print("End x = {}, y = {}".format(self.end_x, self.end_y))
