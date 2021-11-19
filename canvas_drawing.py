@@ -86,17 +86,18 @@ class ExampleApp(Frame):
 
         self.file_button.grid(row = 2, column = 2)
         
-        """self.cut_button = Button(text = "Cut",
+        self.cut_button = Button(text = "Cut",
                                     width = 10,
                                     height = 2,
                                     state = DISABLED,
                                     command = self.cutting)
-        self.cut_button.grid(row = 3, column = 2)"""
+        self.cut_button.grid(row = 3, column = 2)
         # -------------------------------------
         
         # CREATING VARIABLES FOR DRAW OBJ
         self.rect = None
         self.oval = None
+        self.rect_FG = None
         # -------------------------------------
 
         # CREATING VARIABLES FOR START X/Y AND END X/Y
@@ -168,9 +169,9 @@ class ExampleApp(Frame):
         # OBJ for drawing mask in paralel to canvas
         self.mask_draw  = ImageDraw.Draw(self.mask_img)
         # upload image on canvas
-        self.canvas.create_image(self.canvas_width/2, self.canvas_height/2,anchor="center",image=self.tk_im)
-        #self.cut_button["state"] = ACTIVE
-    # -------------------------------------
+        self.canvas.create_image(0, 0,anchor="nw",image=self.tk_im)
+        self.cut_button["state"] = ACTIVE
+        # -------------------------------------
    
     # DEF FOR START DRAWING RECTANGLE
     def on_button_press(self, event):
@@ -217,8 +218,8 @@ class ExampleApp(Frame):
                                         (self.end_x, self.end_y)],
                                         outline = "white",
                                         fill="white")
-
-
+            self.rect_FG = (int(self.start_x), int(self.start_y), 
+                            int(self.end_x), int(self.end_y))
             print("End x = {}, y = {}".format(self.end_x, self.end_y))
         else:
             # RECTANGLE DRAW IN PIL OBJ
@@ -255,10 +256,11 @@ class ExampleApp(Frame):
     # -------------------------------------
     
     # DEF FOR CUTTING 
-    """def cutting(self):
-        CutImage.img = cv2.imread(self.filename)
-        print(CutImage.img)
-        cut_proccess = CutImage(self.mask_img)"""
+    def cutting(self):
+        #CutImage.img = cv2.imread(self.filename)
+        self.mask_img.show()
+        if self.rect_FG:
+            cut_proccess = CutImage(self.im, self.mask_img, mode=0, rect=self.rect_FG)
     # -------------------------------------
 
 
