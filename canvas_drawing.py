@@ -10,12 +10,14 @@ class ExampleApp(Frame):
         Frame.__init__(self,master=None)
         master.geometry("{0}x{1}".format(master.winfo_screenwidth(),
                                             master.winfo_screenheight()))
-        
         # CREATING CANVAS
         self.x = self.y = 0
         self.canvas_width = master.winfo_screenwidth() - (master.winfo_screenwidth()*0.2)
         self.canvas_height = master.winfo_screenheight()
-        self.canvas = Canvas(self, width = self.canvas_width, height = self.canvas_height, cursor="cross")
+        self.canvas = Canvas(self, width = self.canvas_width, 
+                                    height = self.canvas_height, 
+                                    cursor="plus",
+                                    highlightthickness = 0)
         # -------------------------------------
         
         # SETTING SCROLLBARS
@@ -28,7 +30,7 @@ class ExampleApp(Frame):
         self.canvas.config(xscrollcommand=self.hbar.set)
         self.canvas.config(xscrollincrement = 5, yscrollincrement = 5)
 
-        self.canvas.grid(row=0,column=0, sticky = N+S+W+E)
+        self.canvas.grid(row=0,column=0,sticky=N+E+S+W)
 
         self.vbar.grid(row=0,column=1,sticky=N+S)
         self.hbar.grid(row=1,column=0,sticky=E+W)
@@ -39,20 +41,20 @@ class ExampleApp(Frame):
         self.draw_mode.set("No_mode")
 
         self.fg_bg_mode = StringVar()
-        self.fg_bg_mode.set("No mode")
+        self.fg_bg_mode.set("FG_mode")
         # -------------------------------------
         
         # CREATING AND SETTING RADIOBUTTONS/BUTTONS
-        self.rect_button = Radiobutton(text = "Rectangle", 
+        self.rect_button = Radiobutton(text = "FG rectangle", 
                                        width = 10, 
                                        height = 2, 
                                        command = self.draw,
                                        variable=self.draw_mode,
                                        value="Rectangle_mode",
-                                       indicatoron=0)
+                                       indicatoron=0,)
         self.rect_button.grid(row = 0, column = 2)
 
-        self.oval_button = Radiobutton(text = "Oval", 
+        self.oval_button = Radiobutton(text = "FG oval", 
                                         width = 10, 
                                         height = 2, 
                                         command = self.draw,
@@ -67,8 +69,8 @@ class ExampleApp(Frame):
                                             command = self.draw,
                                             variable=self.fg_bg_mode,
                                             value = "FG_mode",
-                                            indicatoron = 0)
-        self.fg_mode_button.grid(row = 1, column = 3)
+                                            indicatoron = 1)
+        self.fg_mode_button.grid(row = 0, column = 3)
 
         self.bg_mode_button = Radiobutton(text = "Background",
                                             width = 10,
@@ -76,8 +78,8 @@ class ExampleApp(Frame):
                                             command = self.draw,
                                             variable=self.fg_bg_mode,
                                             value = "BG_mode",
-                                            indicatoron = 0)
-        self.bg_mode_button.grid(row = 2, column = 3)
+                                            indicatoron = 1)
+        self.bg_mode_button.grid(row = 1, column = 3)
 
         self.file_button = Button(text = "Upload file", 
                                     width = 10, 
@@ -86,12 +88,12 @@ class ExampleApp(Frame):
 
         self.file_button.grid(row = 2, column = 2)
         
-        """self.cut_button = Button(text = "Cut",
+        self.cut_button = Button(text = "Cut",
                                     width = 10,
                                     height = 2,
                                     state = DISABLED,
                                     command = self.cutting)
-        self.cut_button.grid(row = 3, column = 2)"""
+        self.cut_button.grid(row = 3, column = 2)
         # -------------------------------------
         
         # CREATING VARIABLES FOR DRAW OBJ
@@ -106,11 +108,10 @@ class ExampleApp(Frame):
         self.end_x = None
         self.end_y = None
         # -------------------------------------
-        
+        self.color = None
 
         #self.rectangle_dict = {}
         #self.oval_dict = {}
-        
     
     # DEF FOR CHOOSING MODE AND DRAWING RECTANGLE OR OVAL
     def draw(self):
@@ -118,29 +119,23 @@ class ExampleApp(Frame):
         if self.fg_bg_mode.get() == "BG_mode":
             self.rect_button["text"] = "BG rectangle"
             self.oval_button["text"] = "BG oval"    
-            # binds for rectangle mode
-            if self.draw_mode.get() == "Rectangle_mode":
-                self.oval_button["bg"] = "lightgrey"
-                self.canvas.bind("<ButtonPress-1>", self.on_button_press)
-                self.canvas.bind("<B1-Motion>", self.on_move_press)
-                self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
-            # binds for dot/oval mode
-            elif self.draw_mode.get()  == "Dot_mode":
-                self.rect_button["bg"] = "lightgrey" 
-                self.canvas.bind("<B1-Motion>", self.oval_drawing)
+            
         elif self.fg_bg_mode.get() == "FG_mode":
             self.rect_button["text"] = "FG rectangle"
             self.oval_button["text"] = "FG oval"
 
-            if self.draw_mode.get() == "Rectangle_mode":
-                self.oval_button["bg"] = "lightgrey"
-                self.canvas.bind("<ButtonPress-1>", self.on_button_press)
-                self.canvas.bind("<B1-Motion>", self.on_move_press)
-                self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
+            # binds for rectangle mode
+        if self.draw_mode.get() == "Rectangle_mode":
+            self.canvas["cursor"] = "plus"
+            self.oval_button["bg"] = "lightgrey"
+            self.canvas.bind("<ButtonPress-1>", self.on_button_press)
+            self.canvas.bind("<B1-Motion>", self.on_move_press)
+            self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
             # binds for dot/oval mode
-            elif self.draw_mode.get()  == "Dot_mode":
-                self.rect_button["bg"] = "lightgrey" 
-                self.canvas.bind("<B1-Motion>", self.oval_drawing)          
+        elif self.draw_mode.get()  == "Dot_mode":
+            self.rect_button["bg"] = "lightgrey"
+            self.canvas["cursor"] = "dot"
+            self.canvas.bind("<B1-Motion>", self.oval_drawing)        
     # -------------------------------------
 
     # DISABLE BINDS
@@ -168,8 +163,8 @@ class ExampleApp(Frame):
         # OBJ for drawing mask in paralel to canvas
         self.mask_draw  = ImageDraw.Draw(self.mask_img)
         # upload image on canvas
-        self.canvas.create_image(self.canvas_width/2, self.canvas_height/2,anchor="center",image=self.tk_im)
-        #self.cut_button["state"] = ACTIVE
+        self.canvas.create_image(0, 0,anchor="nw",image=self.tk_im)
+        self.cut_button["state"] = ACTIVE
     # -------------------------------------
    
     # DEF FOR START DRAWING RECTANGLE
@@ -177,13 +172,11 @@ class ExampleApp(Frame):
         # save mouse drag start position
         self.start_x = self.canvas.canvasx(event.x)
         self.start_y = self.canvas.canvasy(event.y)
+        self.color = "black"
         if self.fg_bg_mode.get() == "FG_mode":
             print("Start x = {}, y = {}".format(self.start_x, self.start_y))
-            self.rect = self.canvas.create_rectangle(self.x, self.y, 1, 1, outline='white')
-        else:
-            print("Start x = {}, y = {}".format(self.start_x, self.start_y))
-
-            self.rect = self.canvas.create_rectangle(self.x, self.y, 1, 1, outline='red')
+            self.color = "white"
+        self.rect = self.canvas.create_rectangle(self.x, self.y, 1, 1, outline=self.color)
     # -------------------------------------
 
     # DEF FOR MOVING MOUSE 
@@ -211,58 +204,44 @@ class ExampleApp(Frame):
     def on_button_release(self, event):
         self.end_x = self.canvas.canvasx(event.x)
         self.end_y = self.canvas.canvasy(event.y)
-        
+        self.color = "black"
         if self.fg_bg_mode.get() == "FG_mode":
-            self.mask_draw.rectangle([(self.start_x, self.start_y),
-                                        (self.end_x, self.end_y)],
-                                        outline = "white",
-                                        fill="white")
-
-
-            print("End x = {}, y = {}".format(self.end_x, self.end_y))
+            self.color = "white"
         else:
-            # RECTANGLE DRAW IN PIL OBJ
-            self.mask_draw.rectangle([(self.start_x, self.start_y),
-                                        (self.end_x, self.end_y)],
-                                        outline = "black",
-                                        fill="black")
-            print("End x = {}, y = {}".format(self.end_x, self.end_y))
+            self.color = "black" 
+        self.mask_draw.rectangle([(self.start_x, self.start_y),
+                                    (self.end_x, self.end_y)],
+                                    outline = self.color,
+                                    fill = self.color)
+        print("End x = {}, y = {}".format(self.end_x, self.end_y))
     # -------------------------------------
 
     # DEF FOR DRAWING OVAL ON CANVAS AND PIL
     def oval_drawing(self, event):
         self.curX = self.canvas.canvasx(event.x)
         self.curY = self.canvas.canvasy(event.y)
+        self.color = "black"
         if self.fg_bg_mode.get() == "FG_mode":
-            self.oval = self.canvas.create_oval(self.curX, self.curY, self.curX+3, self.curY+3, fill='white', outline = "white")
-            self.mask_draw.ellipse([(self.curX, self.curY), 
-                                    (self.curX+3, self.curY+3)],
-                                    outline = "white",
-                                    fill='white',
-                                    )
+            self.color = "white"
+
         else:
-            self.oval = self.canvas.create_oval(self.curX, self.curY, self.curX+3, self.curY+3, fill='black')
-        
-        # ellipse drawing in PIL
-            self.mask_draw.ellipse([(self.curX, self.curY), 
-                                    (self.curX+3, self.curY+3)],
-                                    outline = "black",
-                                    fill='black',
-                                    )
-
-
-
+            self.color = "black"
+        self.oval = self.canvas.create_oval(self.curX, self.curY, self.curX+3, self.curY+3, fill=self.color, 
+                                            outline = self.color)
+        # ellipse drawing in PIL        
+        self.mask_draw.ellipse([(self.curX, self.curY), 
+                                (self.curX+3, self.curY+3)],
+                                outline =self.color,
+                                fill=self.color,
+                                )
     # -------------------------------------
     
     # DEF FOR CUTTING 
-    """def cutting(self):
+    def cutting(self):
         CutImage.img = cv2.imread(self.filename)
         print(CutImage.img)
-        cut_proccess = CutImage(self.mask_img)"""
+        cut_proccess = CutImage(self.mask_img)
     # -------------------------------------
-
-
-   
 
 if __name__ == "__main__":       
     root=Tk()
@@ -270,7 +249,3 @@ if __name__ == "__main__":
     app = ExampleApp(root)
     app.grid()
     root.mainloop()
-
-
-
- 
