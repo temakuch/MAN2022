@@ -99,6 +99,7 @@ class ExampleApp(Frame):
         # CREATING VARIABLES FOR DRAW OBJ
         self.rect = None
         self.oval = None
+        self.rect_FG = None
         # -------------------------------------
 
         # CREATING VARIABLES FOR START X/Y AND END X/Y
@@ -165,7 +166,9 @@ class ExampleApp(Frame):
         # upload image on canvas
         self.canvas.create_image(0, 0,anchor="nw",image=self.tk_im)
         self.cut_button["state"] = ACTIVE
-    # -------------------------------------
+        # -------------------------------------
+
+
    
     # DEF FOR START DRAWING RECTANGLE
     def on_button_press(self, event):
@@ -206,6 +209,13 @@ class ExampleApp(Frame):
         self.end_y = self.canvas.canvasy(event.y)
         self.color = "black"
         if self.fg_bg_mode.get() == "FG_mode":
+            self.mask_draw.rectangle([(self.start_x, self.start_y),
+                                        (self.end_x, self.end_y)],
+                                        outline = "white",
+                                        fill="white")
+            self.rect_FG = (int(self.start_x), int(self.start_y), 
+                            int(self.end_x), int(self.end_y))
+            print("End x = {}, y = {}".format(self.end_x, self.end_y))
             self.color = "white"
         else:
             self.color = "black" 
@@ -238,9 +248,11 @@ class ExampleApp(Frame):
     
     # DEF FOR CUTTING 
     def cutting(self):
-        CutImage.img = cv2.imread(self.filename)
-        print(CutImage.img)
-        cut_proccess = CutImage(self.mask_img)
+        #CutImage.img = cv2.imread(self.filename)
+        self.mask_img.show()
+        if self.rect_FG:
+            cut_proccess = CutImage(self.im, self.mask_img, mode=0, rect=self.rect_FG)
+
     # -------------------------------------
 
 if __name__ == "__main__":       
