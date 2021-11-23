@@ -179,6 +179,7 @@ class ExampleApp(Frame):
         self.canvas.create_image(0, 0,anchor="nw",image=self.tk_im)
         self.cut_button["state"] = ACTIVE
         self.hint["text"] = "Зображення придатне до редагування, оберіть інструмент."
+
         # -------------------------------------
 
 
