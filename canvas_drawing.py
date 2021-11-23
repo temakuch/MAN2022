@@ -34,6 +34,8 @@ class ExampleApp(Frame):
 
         self.vbar.grid(row=0,column=1,sticky=N+S)
         self.hbar.grid(row=1,column=0,sticky=E+W)
+        self.dot_icon = PhotoImage(file = "dot.png")
+        self.plus_icon = PhotoImage(file = "plus.png")
         # -------------------------------------
 
         # SETING MODE FOR draw_mode
@@ -45,25 +47,30 @@ class ExampleApp(Frame):
         # -------------------------------------
         
         # CREATING AND SETTING RADIOBUTTONS/BUTTONS
-        self.rect_button = Radiobutton(text = "FG rectangle", 
-                                       width = 10, 
-                                       height = 2, 
+        self.hint = Label(text = "Завантажте зображення та оберіть один із доступних інструментів.")
+        self.hint.grid(row = 0, column = 0)
+        self.cut_hint = Label(text = "")
+        self.cut_hint.grid(row = 1, column = 0)
+
+        self.rect_button = Radiobutton(text = "Прямокутник", 
+                                       image = self.plus_icon, 
                                        command = self.draw,
                                        variable=self.draw_mode,
                                        value="Rectangle_mode",
-                                       indicatoron=0,)
-        self.rect_button.grid(row = 0, column = 2)
+                                       indicatoron=0,
+                                       )
+        self.rect_button.grid(row = 0, column = 2, pady = 3)
 
-        self.oval_button = Radiobutton(text = "FG oval", 
-                                        width = 10, 
-                                        height = 2, 
+        self.oval_button = Radiobutton(text = "Спрей", 
+                                        image = self.dot_icon, 
                                         command = self.draw,
                                         variable=self.draw_mode,
                                         value="Dot_mode",
-                                        indicatoron=0)
-        self.oval_button.grid(row = 1, column = 2)
+                                        indicatoron=0,
+                                        state = DISABLED,)
+        self.oval_button.grid(row = 1, column = 2, pady = 3)
 
-        self.fg_mode_button = Radiobutton(text = "Foreground",
+        self.fg_mode_button = Radiobutton(text = "Передній план",
                                             width = 10,
                                             height = 2,
                                             command = self.draw,
@@ -72,7 +79,7 @@ class ExampleApp(Frame):
                                             indicatoron = 1)
         self.fg_mode_button.grid(row = 0, column = 3)
 
-        self.bg_mode_button = Radiobutton(text = "Background",
+        self.bg_mode_button = Radiobutton(text = "Задній план",
                                             width = 10,
                                             height = 2,
                                             command = self.draw,
@@ -81,24 +88,24 @@ class ExampleApp(Frame):
                                             indicatoron = 1)
         self.bg_mode_button.grid(row = 1, column = 3)
 
-        self.file_button = Button(text = "Upload file", 
-                                    width = 10, 
+        self.file_button = Button(text = "Завантажити фото", 
                                     height = 2,
                                     command = self.upload_file)
 
-        self.file_button.grid(row = 2, column = 2)
+        self.file_button.grid(row = 2, column = 2, pady = 3)
         
-        self.cut_button = Button(text = "Cut",
+        self.cut_button = Button(text = "Обрізати",
                                     width = 10,
                                     height = 2,
                                     state = DISABLED,
                                     command = self.cutting)
-        self.cut_button.grid(row = 3, column = 2)
+        self.cut_button.grid(row = 3, column = 2, pady = 3)
         # -------------------------------------
         
         # CREATING VARIABLES FOR DRAW OBJ
         self.rect = None
         self.oval = None
+        self.rect_FG = None
         # -------------------------------------
 
         # CREATING VARIABLES FOR START X/Y AND END X/Y
@@ -117,17 +124,22 @@ class ExampleApp(Frame):
     def draw(self):
         self.unbinding()
         if self.fg_bg_mode.get() == "BG_mode":
-            self.rect_button["text"] = "BG rectangle"
-            self.oval_button["text"] = "BG oval"    
-            
+            self.rect_button["text"] = "Квадрат"
+            self.oval_button["text"] = "Спрей"    
+            self.oval_button["state"] = ACTIVE
+            self.mode = "маска"
+
         elif self.fg_bg_mode.get() == "FG_mode":
-            self.rect_button["text"] = "FG rectangle"
-            self.oval_button["text"] = "FG oval"
+            self.rect_button["text"] = "Прямокутник"
+            self.oval_button["text"] = "Спрей"
+            self.oval_button["state"] = DISABLED
+            self.mode = "передній план"
 
             # binds for rectangle mode
         if self.draw_mode.get() == "Rectangle_mode":
             self.canvas["cursor"] = "plus"
             self.oval_button["bg"] = "lightgrey"
+            self.hint["text"] = "Обрано режим малювання прямокутником, шар: {}.".format(self.mode)
             self.canvas.bind("<ButtonPress-1>", self.on_button_press)
             self.canvas.bind("<B1-Motion>", self.on_move_press)
             self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
@@ -135,7 +147,8 @@ class ExampleApp(Frame):
         elif self.draw_mode.get()  == "Dot_mode":
             self.rect_button["bg"] = "lightgrey"
             self.canvas["cursor"] = "dot"
-            self.canvas.bind("<B1-Motion>", self.oval_drawing)        
+            self.hint["text"] = "Обрано режим малювання спреєм, шар: {}.".format(self.mode)
+            self.canvas.bind("<B1-Motion>", self.oval_drawing)       
     # -------------------------------------
 
     # DISABLE BINDS
@@ -165,7 +178,10 @@ class ExampleApp(Frame):
         # upload image on canvas
         self.canvas.create_image(0, 0,anchor="nw",image=self.tk_im)
         self.cut_button["state"] = ACTIVE
-    # -------------------------------------
+        self.hint["text"] = "Зображення придатне до редагування, оберіть інструмент."
+        # -------------------------------------
+
+
    
     # DEF FOR START DRAWING RECTANGLE
     def on_button_press(self, event):
@@ -177,6 +193,7 @@ class ExampleApp(Frame):
             print("Start x = {}, y = {}".format(self.start_x, self.start_y))
             self.color = "white"
         self.rect = self.canvas.create_rectangle(self.x, self.y, 1, 1, outline=self.color)
+        
     # -------------------------------------
 
     # DEF FOR MOVING MOUSE 
@@ -206,6 +223,13 @@ class ExampleApp(Frame):
         self.end_y = self.canvas.canvasy(event.y)
         self.color = "black"
         if self.fg_bg_mode.get() == "FG_mode":
+            self.mask_draw.rectangle([(self.start_x, self.start_y),
+                                        (self.end_x, self.end_y)],
+                                        outline = "white",
+                                        fill="white")
+            self.rect_FG = (int(self.start_x), int(self.start_y), 
+                            int(self.end_x), int(self.end_y))
+            print("End x = {}, y = {}".format(self.end_x, self.end_y))
             self.color = "white"
         else:
             self.color = "black" 
@@ -214,6 +238,7 @@ class ExampleApp(Frame):
                                     outline = self.color,
                                     fill = self.color)
         print("End x = {}, y = {}".format(self.end_x, self.end_y))
+        self.cut_hint["text"] = 'Можливо, ви вже готові утворити нове зображення, натисніть "Обрізати" або продовжуйте редагування.'
     # -------------------------------------
 
     # DEF FOR DRAWING OVAL ON CANVAS AND PIL
@@ -228,6 +253,7 @@ class ExampleApp(Frame):
             self.color = "black"
         self.oval = self.canvas.create_oval(self.curX, self.curY, self.curX+3, self.curY+3, fill=self.color, 
                                             outline = self.color)
+        self.cut_hint["text"] = 'Можливо, ви вже готові утворити нове зображення, натисніть "Обрізати" або продовжуйте редагування.'
         # ellipse drawing in PIL        
         self.mask_draw.ellipse([(self.curX, self.curY), 
                                 (self.curX+3, self.curY+3)],
@@ -238,9 +264,11 @@ class ExampleApp(Frame):
     
     # DEF FOR CUTTING 
     def cutting(self):
-        CutImage.img = cv2.imread(self.filename)
-        print(CutImage.img)
-        cut_proccess = CutImage(self.mask_img)
+        #CutImage.img = cv2.imread(self.filename)
+        self.mask_img.show()
+        if self.rect_FG:
+            cut_proccess = CutImage(self.im, self.mask_img, mode=0, rect=self.rect_FG)
+
     # -------------------------------------
 
 if __name__ == "__main__":       
