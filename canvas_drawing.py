@@ -36,6 +36,8 @@ class ExampleApp(Frame):
         self.hbar.grid(row=1,column=0,sticky=E+W)
         self.dot_icon = PhotoImage(file = "dot.png")
         self.plus_icon = PhotoImage(file = "plus.png")
+        self.on = PhotoImage(file = "on.png")
+        self.off = PhotoImage(file = "off.png")
         # -------------------------------------
 
         # SETING MODE FOR draw_mode
@@ -44,14 +46,22 @@ class ExampleApp(Frame):
 
         self.fg_bg_mode = StringVar()
         self.fg_bg_mode.set("FG_mode")
+
+        self.cut_mode = 0
         # -------------------------------------
         
         # CREATING AND SETTING RADIOBUTTONS/BUTTONS
         self.hint = Label(text = "Завантажте зображення та оберіть один із доступних інструментів.")
         self.hint.grid(row = 0, column = 0)
+        
         self.cut_hint = Label(text = "")
         self.cut_hint.grid(row = 1, column = 0)
+        
+        self.lb = Label(text = "Спрощений режим")
+        self.lb.grid(row = 0, column = 1)
 
+        self.on_off_button = Button(image = self.on, command = self.on_off_mode)
+        self.on_off_button.grid(row = 0, column = 2)
         self.rect_button = Radiobutton(text = "Прямокутник", 
                                        image = self.plus_icon, 
                                        command = self.draw,
@@ -59,7 +69,7 @@ class ExampleApp(Frame):
                                        value="Rectangle_mode",
                                        indicatoron=0,
                                        )
-        self.rect_button.grid(row = 0, column = 2, pady = 3)
+        self.rect_button.grid(row = 1, column = 1, pady = 3)
 
         self.oval_button = Radiobutton(text = "Спрей", 
                                         image = self.dot_icon, 
@@ -67,8 +77,8 @@ class ExampleApp(Frame):
                                         variable=self.draw_mode,
                                         value="Dot_mode",
                                         indicatoron=0,
-                                        state = DISABLED,)
-        self.oval_button.grid(row = 1, column = 2, pady = 3)
+                                        state = DISABLED)
+        self.oval_button.grid(row = 2, column = 1, pady = 3)
 
         self.fg_mode_button = Radiobutton(text = "Передній план",
                                             width = 10,
@@ -77,7 +87,7 @@ class ExampleApp(Frame):
                                             variable=self.fg_bg_mode,
                                             value = "FG_mode",
                                             indicatoron = 1)
-        self.fg_mode_button.grid(row = 0, column = 3)
+        self.fg_mode_button.grid(row = 1, column = 2)
 
         self.bg_mode_button = Radiobutton(text = "Задній план",
                                             width = 10,
@@ -86,20 +96,20 @@ class ExampleApp(Frame):
                                             variable=self.fg_bg_mode,
                                             value = "BG_mode",
                                             indicatoron = 1)
-        self.bg_mode_button.grid(row = 1, column = 3)
+        self.bg_mode_button.grid(row = 2, column = 2)
 
         self.file_button = Button(text = "Завантажити фото", 
                                     height = 2,
                                     command = self.upload_file)
 
-        self.file_button.grid(row = 2, column = 2, pady = 3)
+        self.file_button.grid(row = 3, column = 1, pady = 3)
         
         self.cut_button = Button(text = "Обрізати",
                                     width = 10,
                                     height = 2,
                                     state = DISABLED,
                                     command = self.cutting)
-        self.cut_button.grid(row = 3, column = 2, pady = 3)
+        self.cut_button.grid(row = 4, column = 1, pady = 3)
         # -------------------------------------
         
         # CREATING VARIABLES FOR DRAW OBJ
@@ -125,21 +135,17 @@ class ExampleApp(Frame):
         self.unbinding()
         if self.fg_bg_mode.get() == "BG_mode":
             self.rect_button["text"] = "Квадрат"
-            self.oval_button["text"] = "Спрей"    
-            self.oval_button["state"] = ACTIVE
-            self.mode = "маска"
+            self.oval_button["text"] = "Спрей"     
 
         elif self.fg_bg_mode.get() == "FG_mode":
             self.rect_button["text"] = "Прямокутник"
             self.oval_button["text"] = "Спрей"
-            self.oval_button["state"] = DISABLED
-            self.mode = "передній план"
 
             # binds for rectangle mode
         if self.draw_mode.get() == "Rectangle_mode":
             self.canvas["cursor"] = "plus"
             self.oval_button["bg"] = "lightgrey"
-            self.hint["text"] = "Обрано режим малювання прямокутником, шар: {}.".format(self.mode)
+            self.hint["text"] = "Обрано режим малювання прямокутником."
             self.canvas.bind("<ButtonPress-1>", self.on_button_press)
             self.canvas.bind("<B1-Motion>", self.on_move_press)
             self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
@@ -147,7 +153,7 @@ class ExampleApp(Frame):
         elif self.draw_mode.get()  == "Dot_mode":
             self.rect_button["bg"] = "lightgrey"
             self.canvas["cursor"] = "dot"
-            self.hint["text"] = "Обрано режим малювання спреєм, шар: {}.".format(self.mode)
+            self.hint["text"] = "Обрано режим малювання спреєм."
             self.canvas.bind("<B1-Motion>", self.oval_drawing)       
     # -------------------------------------
 
@@ -268,9 +274,18 @@ class ExampleApp(Frame):
         #CutImage.img = cv2.imread(self.filename)
         self.mask_img.show()
         if self.rect_FG:
-            cut_proccess = CutImage(self.im, self.mask_img, mode=0, rect=self.rect_FG)
+            cut_proccess = CutImage(self.im, self.mask_img, mode=self.cut_mode, rect=self.rect_FG)
 
     # -------------------------------------
+    def on_off_mode(self):
+        if self.on_off_button["image"] == "pyimage3":
+            self.cut_mode = 0;
+            self.on_off_button["image"] = "pyimage4"
+            self.oval_button["state"] = ACTIVE
+        else:
+            self.cut_mode = 1;
+            self.on_off_button["image"] = "pyimage3"
+            self.oval_button["state"] = DISABLED
 
 if __name__ == "__main__":       
     root=Tk()

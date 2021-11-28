@@ -43,7 +43,7 @@ class CutImage():
 		img2 = Image.fromarray(self.img)
 		mask, b,f = cv.grabCut(self.img, 
 			       			self.mask, 
-			       			None, 
+			       			self.rect, 
 			       			self.bgdmodel, 
 			       			self.fgdmodel, 
 			       			1, 
@@ -63,6 +63,7 @@ class CutImage():
 			self.mask[self.newmask == 255] = cv.GC_FGD
 			# wherever it is marked black (sure background), change mask=0
 			self.mask[self.newmask == 0] = cv.GC_BGD
+			self.rect = None
 		elif mode == 1:
 			self.mode = cv.GC_INIT_WITH_RECT
 		else: 
