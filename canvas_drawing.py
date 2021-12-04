@@ -9,11 +9,11 @@ class ExampleApp(Frame):
     def __init__(self,master):
         Frame.__init__(self,master=None)
         master.geometry("{0}x{1}".format(master.winfo_screenwidth(),
-                                            master.winfo_screenheight()))
+                                            master.winfo_screenheight()-100))
         # CREATING CANVAS
         self.x = self.y = 0
         self.canvas_width = master.winfo_screenwidth() - (master.winfo_screenwidth()*0.2)
-        self.canvas_height = master.winfo_screenheight()
+        self.canvas_height = master.winfo_screenheight() - 500
         self.canvas = Canvas(self, width = self.canvas_width, 
                                     height = self.canvas_height, 
                                     cursor="plus",
@@ -47,7 +47,7 @@ class ExampleApp(Frame):
         self.fg_bg_mode = StringVar()
         self.fg_bg_mode.set("FG_mode")
 
-        self.cut_mode = 0
+        self.cut_mode = 1
         # -------------------------------------
         
         # CREATING AND SETTING RADIOBUTTONS/BUTTONS
@@ -60,6 +60,9 @@ class ExampleApp(Frame):
         self.lb = Label(text = "Спрощений режим")
         self.lb.grid(row = 0, column = 1)
 
+        self.on_off_mode_value = IntVar()
+        self.on_off_mode_value.set(1)
+        print ("MODE in drawing " , self.on_off_mode_value.get(),self.cut_mode)
         self.on_off_button = Button(image = self.on, command = self.on_off_mode)
         self.on_off_button.grid(row = 0, column = 2)
         self.rect_button = Radiobutton(text = "Прямокутник", 
@@ -278,18 +281,27 @@ class ExampleApp(Frame):
 
     # -------------------------------------
     def on_off_mode(self):
-        if self.on_off_button["image"] == "pyimage3":
-            self.cut_mode = 0;
-            self.on_off_button["image"] = "pyimage4"
+        onoff = self.on_off_mode_value.get()
+        if onoff:
+            self.on_off_mode_value.set(0)
+            onoff = self.on_off_mode_value.get()
+        else: 
+            self.on_off_mode_value.set(1)
+            onoff = self.on_off_mode_value.get()
+        if onoff == 1:
+            self.cut_mode = 1
+            print ("MODE in drawing " , onoff, self.cut_mode)
+            self.on_off_button.configure(image = self.on)
+            self.oval_button["state"] = DISABLED 
+        elif onoff == 0:
+            self.cut_mode = 0
+            print ("MODE in drawing " , onoff, self.cut_mode)
+            self.on_off_button.configure(image = self.off)
             self.oval_button["state"] = ACTIVE
-        else:
-            self.cut_mode = 1;
-            self.on_off_button["image"] = "pyimage3"
-            self.oval_button["state"] = DISABLED
 
 if __name__ == "__main__":       
     root=Tk()
-    root.state('zoomed')
+    #root.state('zoomed')
     app = ExampleApp(root)
     app.grid()
     root.mainloop()
