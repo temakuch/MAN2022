@@ -2,8 +2,9 @@ from PIL import Image as PIL_img, ImageTk, ImageDraw, ImageOps
 from tkinter import *
 from tkinter.filedialog import askopenfilename  
 from cv_processing import CutImage  
-import cv2
-
+import cv2 as cv
+import time
+import os
 
 class ExampleApp(Frame):
     def __init__(self,master):
@@ -13,7 +14,7 @@ class ExampleApp(Frame):
         # CREATING CANVAS
         self.x = self.y = 0
         self.canvas_width = master.winfo_screenwidth() - (master.winfo_screenwidth()*0.2)
-        self.canvas_height = master.winfo_screenheight()
+        self.canvas_height = master.winfo_screenheight() - 310
         self.canvas = Canvas(self, width = self.canvas_width, 
                                     height = self.canvas_height, 
                                     cursor="plus",
@@ -47,7 +48,7 @@ class ExampleApp(Frame):
         self.fg_bg_mode = StringVar()
         self.fg_bg_mode.set("FG_mode")
 
-        self.cut_mode = 0
+        self.cut_mode = 1
         # -------------------------------------
         
         # CREATING AND SETTING RADIOBUTTONS/BUTTONS
@@ -60,6 +61,9 @@ class ExampleApp(Frame):
         self.lb = Label(text = "Спрощений режим")
         self.lb.grid(row = 0, column = 1)
 
+        self.on_off_mode_value = IntVar()
+        self.on_off_mode_value.set(1)
+        print ("MODE in drawing " , self.on_off_mode_value.get(),self.cut_mode)
         self.on_off_button = Button(image = self.on, command = self.on_off_mode)
         self.on_off_button.grid(row = 0, column = 2)
         self.rect_button = Radiobutton(text = "Прямокутник", 
@@ -110,6 +114,22 @@ class ExampleApp(Frame):
                                     state = DISABLED,
                                     command = self.cutting)
         self.cut_button.grid(row = 4, column = 1, pady = 3)
+
+        self.clean_button = Button(text = "Очистити",
+                                        width = 10,
+                                        height = 2,
+                                        command = self.clean)
+        self.clean_button.grid(row = 5, column = 1, pady = 3)
+
+        self.save_button = Button(text = "Зберегти",
+                                        width = 10,
+                                        height = 2,
+                                        command = self.save)
+        self.cancel_button = Button(text = "Відмінити",
+                                        width = 10,
+                                        height = 2,
+                                        command = self.cancel)
+
         # -------------------------------------
         
         # CREATING VARIABLES FOR DRAW OBJ
@@ -125,8 +145,8 @@ class ExampleApp(Frame):
         self.end_x = None
         self.end_y = None
         # -------------------------------------
-        self.color = None
-
+        self.fg_color = "white"
+        self.bg_color = "black"
         #self.rectangle_dict = {}
         #self.oval_dict = {}
     
@@ -195,11 +215,11 @@ class ExampleApp(Frame):
         # save mouse drag start position
         self.start_x = self.canvas.canvasx(event.x)
         self.start_y = self.canvas.canvasy(event.y)
-        self.color = "black"
         if self.fg_bg_mode.get() == "FG_mode":
             print("Start x = {}, y = {}".format(self.start_x, self.start_y))
-            self.color = "white"
-        self.rect = self.canvas.create_rectangle(self.x, self.y, 1, 1, outline=self.color)
+            self.rect = self.canvas.create_rectangle(self.x, self.y, 1, 1, outline=self.fg_color)
+        else:
+            self.rect = self.canvas.create_rectangle(self.x, self.y, 1, 1, outline=self.bg_color)
         
     # -------------------------------------
 
@@ -228,22 +248,21 @@ class ExampleApp(Frame):
     def on_button_release(self, event):
         self.end_x = self.canvas.canvasx(event.x)
         self.end_y = self.canvas.canvasy(event.y)
-        self.color = "black"
+
+        # cv.rectangle(img, start, end, color, thickness)
         if self.fg_bg_mode.get() == "FG_mode":
             self.mask_draw.rectangle([(self.start_x, self.start_y),
                                         (self.end_x, self.end_y)],
-                                        outline = "white",
-                                        fill="white")
+                                        outline = self.fg_color,
+                                        fill = self.fg_color)
             self.rect_FG = (int(self.start_x), int(self.start_y), 
                             int(self.end_x), int(self.end_y))
             print("End x = {}, y = {}".format(self.end_x, self.end_y))
-            self.color = "white"
-        else:
-            self.color = "black" 
-        self.mask_draw.rectangle([(self.start_x, self.start_y),
+        elif self.fg_bg_mode.get() == "BG_mode": 
+            self.mask_draw.rectangle([(self.start_x, self.start_y),
                                     (self.end_x, self.end_y)],
-                                    outline = self.color,
-                                    fill = self.color)
+                                    outline = self.bg_color,
+                                    fill = self.bg_color)
         print("End x = {}, y = {}".format(self.end_x, self.end_y))
         self.cut_hint["text"] = 'Можливо, ви вже готові утворити нове зображення, натисніть "Обрізати" або продовжуйте редагування.'
     # -------------------------------------
@@ -252,21 +271,29 @@ class ExampleApp(Frame):
     def oval_drawing(self, event):
         self.curX = self.canvas.canvasx(event.x)
         self.curY = self.canvas.canvasy(event.y)
-        self.color = "black"
+
         if self.fg_bg_mode.get() == "FG_mode":
-            self.color = "white"
+            self.oval = self.canvas.create_oval(self.curX, self.curY, self.curX+3, self.curY+3, fill=self.fg_color, 
+                                            outline = self.fg_color)
+
+            self.mask_draw.ellipse([(self.curX, self.curY), 
+                                (self.curX+3, self.curY+3)],
+                                outline =self.fg_color,
+                                fill=self.fg_color,
+                                )
 
         else:
-            self.color = "black"
-        self.oval = self.canvas.create_oval(self.curX, self.curY, self.curX+3, self.curY+3, fill=self.color, 
-                                            outline = self.color)
+            self.oval = self.canvas.create_oval(self.curX, self.curY, self.curX+3, self.curY+3, fill=self.bg_color, 
+                                            outline = self.bg_color)
+
+            self.mask_draw.ellipse([(self.curX, self.curY), 
+                                (self.curX+3, self.curY+3)],
+                                outline =self.bg_color,
+                                fill=self.bg_color,
+                                )
+
         self.cut_hint["text"] = 'Можливо, ви вже готові утворити нове зображення, натисніть "Обрізати" або продовжуйте редагування.'
         # ellipse drawing in PIL        
-        self.mask_draw.ellipse([(self.curX, self.curY), 
-                                (self.curX+3, self.curY+3)],
-                                outline =self.color,
-                                fill=self.color,
-                                )
     # -------------------------------------
     
     # DEF FOR CUTTING 
@@ -275,17 +302,60 @@ class ExampleApp(Frame):
         self.mask_img.show()
         if self.rect_FG:
             cut_proccess = CutImage(self.im, self.mask_img, mode=self.cut_mode, rect=self.rect_FG)
-
+        
+        time.sleep(5)
+        
+        self.res = PIL_img.open('grabcut_output.png')
+        self.result_img = ImageTk.PhotoImage(self.res)
+        self.canvas.create_image(0, 0,anchor="nw",image=self.result_img)
+        self.save_button.grid(row = 4, column = 2, pady = 3)
+        self.cancel_button.grid(row = 5, column = 2, pady = 3)
     # -------------------------------------
     def on_off_mode(self):
-        if self.on_off_button["image"] == "pyimage3":
-            self.cut_mode = 0;
-            self.on_off_button["image"] = "pyimage4"
+        onoff = self.on_off_mode_value.get()
+        if onoff:
+            self.on_off_mode_value.set(0)
+            onoff = self.on_off_mode_value.get()
+        else: 
+            self.on_off_mode_value.set(1)
+            onoff = self.on_off_mode_value.get()
+        if onoff == 1:
+            self.cut_mode = 1
+            print ("MODE in drawing " , onoff, self.cut_mode)
+            self.on_off_button.configure(image = self.on)
+            self.oval_button["state"] = DISABLED 
+        elif onoff == 0:
+            self.cut_mode = 0
+            print ("MODE in drawing " , onoff, self.cut_mode)
+            self.on_off_button.configure(image = self.off)
             self.oval_button["state"] = ACTIVE
-        else:
-            self.cut_mode = 1;
-            self.on_off_button["image"] = "pyimage3"
-            self.oval_button["state"] = DISABLED
+
+
+    def clean(self):
+        self.canvas.delete("all")
+        self.mask_draw = None
+        self.mask_img = None
+         
+        self.mask_img = ImageOps.grayscale(self.im.copy())
+        self.mask_draw  = ImageDraw.Draw(self.mask_img)
+        self.canvas.create_image(0, 0,anchor="nw",image=self.tk_im)
+    
+    def cancel(self):
+        os.remove('grabcut_output.png')
+        self.save_button.grid_forget()
+        self.cancel_button.grid_forget()
+        self.mask_draw = None
+        self.mask_img = None
+         
+        self.mask_img = ImageOps.grayscale(self.im.copy())
+        self.mask_draw  = ImageDraw.Draw(self.mask_img)
+
+        self.canvas.create_image(0, 0,anchor="nw",image=self.tk_im)
+    
+    def save(self):
+        os.rename('grabcut_output.png', 'result.png')
+        self.hint["text"] = 'Ваш файл збережено під назвою "result.png"'
+
 
 if __name__ == "__main__":       
     root=Tk()
