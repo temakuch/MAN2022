@@ -10,7 +10,7 @@ class ExampleApp(Frame):
     def __init__(self,master):
         Frame.__init__(self,master=None)
         master.geometry("{0}x{1}".format(master.winfo_screenwidth(),
-                                            master.winfo_screenheight()))
+                                            master.winfo_screenheight()-100))
         # CREATING CANVAS
         self.x = self.y = 0
         self.canvas_width = master.winfo_screenwidth() - (master.winfo_screenwidth()*0.2)
@@ -356,10 +356,9 @@ class ExampleApp(Frame):
         os.rename('grabcut_output.png', 'result.png')
         self.hint["text"] = 'Ваш файл збережено під назвою "result.png"'
 
-
 if __name__ == "__main__":       
     root=Tk()
-    root.state('zoomed')
+    #root.state('zoomed')
     app = ExampleApp(root)
     app.grid()
     root.mainloop()
