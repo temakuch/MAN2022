@@ -12,26 +12,26 @@ class CutImage():
 		self.fgdmodel = np.zeros((1,65),np.float64)
 		img.save('temp_img.jpg')
 		self.rect = rect
-		self.mask = mask
 		print("RECT! ", self.rect)
 		print("MODE! ", mode)
 		#self.img = np.array(img)
 		#cv.imwrite('temp_img.jpg', self.img)
 		self.img = cv.imread("temp_img.jpg")
-		#self.newmask = np.array(mask)
+		self.newmask = np.array(mask)
 		print("Shape img", self.img.shape)
-		#print("Shape newmask", self.newmask.shape)
-		cv.imwrite('mask.png', self.mask)
+		print("Shape newmask", self.newmask.shape)
+		cv.imwrite('mask.png', self.newmask)
 		cv.imwrite('img_cv_proc.png', self.img)
 		
 		#default empty mask
-		#self.mask = np.zeros(self.img.shape[:2], dtype = np.uint8)
+		self.mask = np.zeros(self.img.shape[:2], dtype = np.uint8)
 		print("Shape zeromask", self.mask.shape)
 		self.init_mode(mode)
 		self.output = np.zeros(self.img.shape, np.uint8)
 		print("RECT to CUT  - ", self.rect)
 		self.mask, self.bgdmodel,self.fgdmodel = cv.grabCut(self.img,self.mask,self.rect, self.bgdmodel,self.fgdmodel,1,cv.GC_INIT_WITH_RECT)
-		
+		self.cut()
+		self.savefile() 
 
 	def cut(self):
 		print(self.mode)
@@ -47,15 +47,14 @@ class CutImage():
 		
 		mask2 = np.where((mask==1) + (mask==3), 255, 0).astype('uint8')
 		self.output = cv.bitwise_and(self.img, self.img, mask=mask2)
-		return True
 
 	def init_mode(self, mode):
 		if mode == 0:
 			self.mode = cv.GC_INIT_WITH_MASK
 			# wherever it is marked white (sure foreground), change mask=1
-			#self.mask[self.newmask == 255] = cv.GC_FGD
+			self.mask[self.newmask == 255] = cv.GC_FGD
 			# wherever it is marked black (sure background), change mask=0
-			#self.mask[self.newmask == 0] = cv.GC_BGD
+			self.mask[self.newmask == 0] = cv.GC_BGD
 			#self.rect = None
 		elif mode == 1:
 			self.mode = cv.GC_INIT_WITH_RECT
