@@ -5,16 +5,25 @@ from cv_processing import CutImage
 import cv2 as cv
 import time
 import os
+import numpy as np
 
 class ExampleApp(Frame):
+    BLACK = [0,0,0]         # sure BG
+    WHITE = [255,255,255]
+    DRAW_BG = {'color' : BLACK, 'val' : 0}
+    DRAW_FG = {'color' : WHITE, 'val' : 1}
+    thickness = 3
+    #DRAW_PR_BG = {'color' : RED, 'val' : 2}
+    #DRAW_PR_FG = {'color' : GREEN, 'val' : 3}
+    
     def __init__(self,master):
         Frame.__init__(self,master=None)
         master.geometry("{0}x{1}".format(master.winfo_screenwidth(),
-                                            master.winfo_screenheight()-100))
+                                            master.winfo_screenheight()))
         # CREATING CANVAS
         self.x = self.y = 0
         self.canvas_width = master.winfo_screenwidth() - (master.winfo_screenwidth()*0.2)
-        self.canvas_height = master.winfo_screenheight() - 310
+        self.canvas_height = master.winfo_screenheight() - 353
         self.canvas = Canvas(self, width = self.canvas_width, 
                                     height = self.canvas_height, 
                                     cursor="plus",
@@ -190,7 +199,8 @@ class ExampleApp(Frame):
         self.f_types = [("All types", ".*")]
         self.filename = askopenfilename(filetypes=self.f_types)
         self.im = PIL_img.open(self.filename)
-        
+        self.mask = cv.imread(self.filename)
+        self.mask = np.zeros(self.mask.shape[:2], dtype = np.uint8)
         self.mask_img = ImageOps.grayscale(self.im.copy())
         
 
@@ -213,8 +223,8 @@ class ExampleApp(Frame):
     # DEF FOR START DRAWING RECTANGLE
     def on_button_press(self, event):
         # save mouse drag start position
-        self.start_x = self.canvas.canvasx(event.x)
-        self.start_y = self.canvas.canvasy(event.y)
+        self.start_x = int(self.canvas.canvasx(event.x))
+        self.start_y = int(self.canvas.canvasy(event.y))
         if self.fg_bg_mode.get() == "FG_mode":
             print("Start x = {}, y = {}".format(self.start_x, self.start_y))
             self.rect = self.canvas.create_rectangle(self.x, self.y, 1, 1, outline=self.fg_color)
@@ -246,51 +256,61 @@ class ExampleApp(Frame):
 
     # DEF FOR DRAWING RECTANGLE IN PIL WHEN MOUSE IS RELEASED
     def on_button_release(self, event):
-        self.end_x = self.canvas.canvasx(event.x)
-        self.end_y = self.canvas.canvasy(event.y)
+        self.end_x = int(self.canvas.canvasx(event.x))
+        self.end_y = int(self.canvas.canvasy(event.y))
 
         # cv.rectangle(img, start, end, color, thickness)
         if self.fg_bg_mode.get() == "FG_mode":
-            self.mask_draw.rectangle([(self.start_x, self.start_y),
+            cv.rectangle(self.mask, (self.start_x, self.start_y),
+                                    (self.end_x, self.end_y),
+                                    self.DRAW_FG['val'],
+                                    1)
+
+            """self.mask_draw.rectangle([(self.start_x, self.start_y),
                                         (self.end_x, self.end_y)],
                                         outline = self.fg_color,
-                                        fill = self.fg_color)
+                                        fill = self.fg_color)"""
             self.rect_FG = (int(self.start_x), int(self.start_y), 
                             int(self.end_x), int(self.end_y))
             print("End x = {}, y = {}".format(self.end_x, self.end_y))
         elif self.fg_bg_mode.get() == "BG_mode": 
-            self.mask_draw.rectangle([(self.start_x, self.start_y),
+            cv.rectangle(self.mask, (self.start_x, self.start_y),
+                                    (self.end_x, self.end_y),
+                                    self.DRAW_BG['val'],
+                                    -1)
+            """self.mask_draw.rectangle([(self.start_x, self.start_y),
                                     (self.end_x, self.end_y)],
                                     outline = self.bg_color,
-                                    fill = self.bg_color)
+                                    fill = self.bg_color)"""
+
         print("End x = {}, y = {}".format(self.end_x, self.end_y))
         self.cut_hint["text"] = 'Можливо, ви вже готові утворити нове зображення, натисніть "Обрізати" або продовжуйте редагування.'
     # -------------------------------------
 
     # DEF FOR DRAWING OVAL ON CANVAS AND PIL
     def oval_drawing(self, event):
-        self.curX = self.canvas.canvasx(event.x)
-        self.curY = self.canvas.canvasy(event.y)
+        self.curX = int(self.canvas.canvasx(event.x))
+        self.curY = int(self.canvas.canvasy(event.y))
 
         if self.fg_bg_mode.get() == "FG_mode":
             self.oval = self.canvas.create_oval(self.curX, self.curY, self.curX+3, self.curY+3, fill=self.fg_color, 
                                             outline = self.fg_color)
-
-            self.mask_draw.ellipse([(self.curX, self.curY), 
+            cv.circle(self.mask, (self.curX, self.curY), self.thickness, self.DRAW_FG['val'], -1)
+            """self.mask_draw.ellipse([(self.curX, self.curY), 
                                 (self.curX+3, self.curY+3)],
                                 outline =self.fg_color,
                                 fill=self.fg_color,
-                                )
+                                )"""
 
         else:
             self.oval = self.canvas.create_oval(self.curX, self.curY, self.curX+3, self.curY+3, fill=self.bg_color, 
                                             outline = self.bg_color)
-
-            self.mask_draw.ellipse([(self.curX, self.curY), 
+            cv.circle(self.mask, (self.curX, self.curY), self.thickness, self.DRAW_BG['val'], -1)
+            """self.mask_draw.ellipse([(self.curX, self.curY), 
                                 (self.curX+3, self.curY+3)],
                                 outline =self.bg_color,
                                 fill=self.bg_color,
-                                )
+                                )"""
 
         self.cut_hint["text"] = 'Можливо, ви вже готові утворити нове зображення, натисніть "Обрізати" або продовжуйте редагування.'
         # ellipse drawing in PIL        
@@ -299,17 +319,16 @@ class ExampleApp(Frame):
     # DEF FOR CUTTING 
     def cutting(self):
         #CutImage.img = cv2.imread(self.filename)
-        self.mask_img.show()
+        #self.mask.show()
         if self.rect_FG:
-            cut_proccess = CutImage(self.im, self.mask_img, mode=self.cut_mode, rect=self.rect_FG)
-        
-        time.sleep(5)
-        
-        self.res = PIL_img.open('grabcut_output.png')
-        self.result_img = ImageTk.PhotoImage(self.res)
-        self.canvas.create_image(0, 0,anchor="nw",image=self.result_img)
-        self.save_button.grid(row = 4, column = 2, pady = 3)
-        self.cancel_button.grid(row = 5, column = 2, pady = 3)
+            cut_proccess = CutImage(self.im, self.mask, mode=self.cut_mode, rect=self.rect_FG)
+            cut_proccess.cut()
+            cut_proccess.savefile() 
+            self.res = PIL_img.open('grabcut_output.png')
+            self.result_img = ImageTk.PhotoImage(self.res)
+            self.canvas.create_image(0, 0,anchor="nw",image=self.result_img)
+            self.save_button.grid(row = 4, column = 2, pady = 3)
+            self.cancel_button.grid(row = 5, column = 2, pady = 3)
     # -------------------------------------
     def on_off_mode(self):
         onoff = self.on_off_mode_value.get()
@@ -333,22 +352,27 @@ class ExampleApp(Frame):
 
     def clean(self):
         self.canvas.delete("all")
-        self.mask_draw = None
-        self.mask_img = None
+        self.mask = cv.imread(self.filename)
+        self.mask = np.zeros(self.mask.shape[:2], dtype = np.uint8)
+        #self.mask_draw = None
+        #self.mask_img = None
          
-        self.mask_img = ImageOps.grayscale(self.im.copy())
-        self.mask_draw  = ImageDraw.Draw(self.mask_img)
+        #self.mask_img = ImageOps.grayscale(self.im.copy())
+        #self.mask_draw  = ImageDraw.Draw(self.mask_img)
         self.canvas.create_image(0, 0,anchor="nw",image=self.tk_im)
     
     def cancel(self):
         os.remove('grabcut_output.png')
         self.save_button.grid_forget()
         self.cancel_button.grid_forget()
-        self.mask_draw = None
-        self.mask_img = None
+
+        self.mask = cv.imread(self.filename)
+        self.mask = np.zeros(self.mask.shape[:2], dtype = np.uint8)
+        #self.mask_draw = None
+        #self.mask_img = None
          
-        self.mask_img = ImageOps.grayscale(self.im.copy())
-        self.mask_draw  = ImageDraw.Draw(self.mask_img)
+        #self.mask_img = ImageOps.grayscale(self.im.copy())
+        #self.mask_draw  = ImageDraw.Draw(self.mask_img)
 
         self.canvas.create_image(0, 0,anchor="nw",image=self.tk_im)
     
@@ -358,7 +382,7 @@ class ExampleApp(Frame):
 
 if __name__ == "__main__":       
     root=Tk()
-    #root.state('zoomed')
+    root.state('zoomed')
     app = ExampleApp(root)
     app.grid()
     root.mainloop()
