@@ -2,7 +2,6 @@ from PIL import Image, ImageTk, ImageDraw, ImageOps
 import cv2 as cv
 import numpy as np
 
-
 class CutImage():
 	def __init__(self, img, mask, mode=0, rect=(50,52,55,57), ):
 		'''mode=0 - mask mode

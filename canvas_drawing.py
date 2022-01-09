@@ -1,11 +1,12 @@
 from PIL import Image as PIL_img, ImageTk, ImageDraw, ImageOps
 from tkinter import *
-from tkinter.filedialog import askopenfilename  
+from tkinter.filedialog import askopenfilename, asksaveasfilename
 from cv_processing import CutImage  
 import cv2 as cv
 import time
 import os
 import numpy as np
+import shutil
 
 class ExampleApp(Frame):
     BLACK = [0,0,0]         # sure BG
@@ -23,7 +24,7 @@ class ExampleApp(Frame):
         # CREATING CANVAS
         self.x = self.y = 0
         self.canvas_width = master.winfo_screenwidth() - (master.winfo_screenwidth()*0.2)
-        self.canvas_height = master.winfo_screenheight() - 353
+        self.canvas_height = master.winfo_screenheight() - 360
         self.canvas = Canvas(self, width = self.canvas_width, 
                                     height = self.canvas_height, 
                                     cursor="plus",
@@ -63,10 +64,12 @@ class ExampleApp(Frame):
         # CREATING AND SETTING RADIOBUTTONS/BUTTONS
         self.hint = Label(text = "Завантажте зображення та оберіть один із доступних інструментів.")
         self.hint.grid(row = 0, column = 0)
-        
+        self.hint.configure(font = ("Segoe UI", 16))
+
         self.cut_hint = Label(text = "")
         self.cut_hint.grid(row = 1, column = 0)
-        
+        self.cut_hint.configure(font = ("Segoe UI", 16))
+
         self.lb = Label(text = "Спрощений режим")
         self.lb.grid(row = 0, column = 1)
 
@@ -99,7 +102,7 @@ class ExampleApp(Frame):
                                             command = self.draw,
                                             variable=self.fg_bg_mode,
                                             value = "FG_mode",
-                                            indicatoron = 1)
+                                            indicatoron = 1,)
         self.fg_mode_button.grid(row = 1, column = 2)
 
         self.bg_mode_button = Radiobutton(text = "Задній план",
@@ -113,7 +116,7 @@ class ExampleApp(Frame):
 
         self.file_button = Button(text = "Завантажити фото", 
                                     height = 2,
-                                    command = self.upload_file)
+                                    command = self.upload_file,)
 
         self.file_button.grid(row = 3, column = 1, pady = 3)
         
@@ -156,8 +159,6 @@ class ExampleApp(Frame):
         # -------------------------------------
         self.fg_color = "white"
         self.bg_color = "black"
-        #self.rectangle_dict = {}
-        #self.oval_dict = {}
     
     # DEF FOR CHOOSING MODE AND DRAWING RECTANGLE OR OVAL
     def draw(self):
@@ -212,10 +213,14 @@ class ExampleApp(Frame):
         # OBJ for drawing mask in paralel to canvas
         self.mask_draw  = ImageDraw.Draw(self.mask_img)
         # upload image on canvas
-        self.canvas.create_image(0, 0,anchor="nw",image=self.tk_im)
         self.cut_button["state"] = ACTIVE
         self.hint["text"] = "Зображення придатне до редагування, оберіть інструмент."
-
+        self.canvas.delete("all")
+        self.mask = cv.imread(self.filename)
+        self.mask = np.zeros(self.mask.shape[:2], dtype = np.uint8)
+        self.canvas.create_image(0, 0,anchor="nw",image=self.tk_im)
+        self.save_button.grid_forget()
+        self.cancel_button.grid_forget()
         # -------------------------------------
 
 
@@ -266,22 +271,16 @@ class ExampleApp(Frame):
                                     self.DRAW_FG['val'],
                                     1)
 
-            """self.mask_draw.rectangle([(self.start_x, self.start_y),
-                                        (self.end_x, self.end_y)],
-                                        outline = self.fg_color,
-                                        fill = self.fg_color)"""
             self.rect_FG = (int(self.start_x), int(self.start_y), 
                             int(self.end_x), int(self.end_y))
+
             print("End x = {}, y = {}".format(self.end_x, self.end_y))
+
         elif self.fg_bg_mode.get() == "BG_mode": 
             cv.rectangle(self.mask, (self.start_x, self.start_y),
                                     (self.end_x, self.end_y),
                                     self.DRAW_BG['val'],
                                     -1)
-            """self.mask_draw.rectangle([(self.start_x, self.start_y),
-                                    (self.end_x, self.end_y)],
-                                    outline = self.bg_color,
-                                    fill = self.bg_color)"""
 
         print("End x = {}, y = {}".format(self.end_x, self.end_y))
         self.cut_hint["text"] = 'Можливо, ви вже готові утворити нове зображення, натисніть "Обрізати" або продовжуйте редагування.'
@@ -296,39 +295,29 @@ class ExampleApp(Frame):
             self.oval = self.canvas.create_oval(self.curX, self.curY, self.curX+3, self.curY+3, fill=self.fg_color, 
                                             outline = self.fg_color)
             cv.circle(self.mask, (self.curX, self.curY), self.thickness, self.DRAW_FG['val'], -1)
-            """self.mask_draw.ellipse([(self.curX, self.curY), 
-                                (self.curX+3, self.curY+3)],
-                                outline =self.fg_color,
-                                fill=self.fg_color,
-                                )"""
 
         else:
             self.oval = self.canvas.create_oval(self.curX, self.curY, self.curX+3, self.curY+3, fill=self.bg_color, 
                                             outline = self.bg_color)
             cv.circle(self.mask, (self.curX, self.curY), self.thickness, self.DRAW_BG['val'], -1)
-            """self.mask_draw.ellipse([(self.curX, self.curY), 
-                                (self.curX+3, self.curY+3)],
-                                outline =self.bg_color,
-                                fill=self.bg_color,
-                                )"""
 
-        self.cut_hint["text"] = 'Можливо, ви вже готові утворити нове зображення, натисніть "Обрізати" або продовжуйте редагування.'
-        # ellipse drawing in PIL        
+        self.cut_hint["text"] = 'Можливо, ви вже готові утворити нове зображення, натисніть "Обрізати" або продовжуйте редагування.'       
     # -------------------------------------
     
     # DEF FOR CUTTING 
     def cutting(self):
-        #CutImage.img = cv2.imread(self.filename)
-        #self.mask.show()
         if self.rect_FG:
-            cut_proccess = CutImage(self.im, self.mask, mode=self.cut_mode, rect=self.rect_FG)
-            cut_proccess.cut()
-            cut_proccess.savefile() 
+            self.cut_proccess = CutImage(self.im, self.mask, mode=self.cut_mode, rect=self.rect_FG)
+            self.cut_proccess.cut()
+            self.cut_proccess.savefile() 
             self.res = PIL_img.open('grabcut_output.png')
             self.result_img = ImageTk.PhotoImage(self.res)
             self.canvas.create_image(0, 0,anchor="nw",image=self.result_img)
             self.save_button.grid(row = 4, column = 2, pady = 3)
             self.cancel_button.grid(row = 5, column = 2, pady = 3)
+            
+        else:
+            self.hint["text"] = "Скористайтесь інструментами, щоб обрізати зображення."
     # -------------------------------------
     def on_off_mode(self):
         onoff = self.on_off_mode_value.get()
@@ -354,12 +343,11 @@ class ExampleApp(Frame):
         self.canvas.delete("all")
         self.mask = cv.imread(self.filename)
         self.mask = np.zeros(self.mask.shape[:2], dtype = np.uint8)
-        #self.mask_draw = None
-        #self.mask_img = None
-         
-        #self.mask_img = ImageOps.grayscale(self.im.copy())
-        #self.mask_draw  = ImageDraw.Draw(self.mask_img)
         self.canvas.create_image(0, 0,anchor="nw",image=self.tk_im)
+        self.rect_FG = None
+        self.save_button.grid_forget()
+        self.cancel_button.grid_forget()
+        self.cut_hint["text"] = ""
     
     def cancel(self):
         os.remove('grabcut_output.png')
@@ -368,17 +356,15 @@ class ExampleApp(Frame):
 
         self.mask = cv.imread(self.filename)
         self.mask = np.zeros(self.mask.shape[:2], dtype = np.uint8)
-        #self.mask_draw = None
-        #self.mask_img = None
-         
-        #self.mask_img = ImageOps.grayscale(self.im.copy())
-        #self.mask_draw  = ImageDraw.Draw(self.mask_img)
 
         self.canvas.create_image(0, 0,anchor="nw",image=self.tk_im)
-    
+        self.cut_hint["text"] = ""
+        self.rect_FG = None
     def save(self):
-        os.rename('grabcut_output.png', 'result.png')
-        self.hint["text"] = 'Ваш файл збережено під назвою "result.png"'
+        filename = asksaveasfilename()
+        self.cut_proccess.savefile()
+        shutil.move('grabcut_output.png', filename)
+        self.hint["text"] = "Ваш файл збережено за вказаним шляхом {}".format(filename)
 
 if __name__ == "__main__":       
     root=Tk()
